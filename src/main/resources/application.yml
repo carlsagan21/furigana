@@ -1,6 +1,6 @@
 # Replace "15. Application properties packaged inside your jar (application.properties and YAML variants)" with "4. Command line arguments"
 # https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-external-config
 line.bot:
-  channel-token: token
-  channel-secret: secret
-  handler.path: /path
+  channel-token: ${LINE_BOT_CHANNEL-TOKEN}
+  channel-secret: ${LINE_BOT_CHANNEL-SECRET}
+  handler.path: ${LINE_BOT_HANDLER_PATH}
