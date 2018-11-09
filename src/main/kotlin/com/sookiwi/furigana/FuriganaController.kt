@@ -1,13 +1,15 @@
 package com.sookiwi.furigana
 
 import com.linecorp.bot.client.LineMessagingClient
+import com.linecorp.bot.model.ReplyMessage
 import com.linecorp.bot.model.event.*
 import com.linecorp.bot.model.event.message.*
-import com.linecorp.bot.model.message.LocationMessage
 import com.linecorp.bot.model.message.Message
+import com.linecorp.bot.model.message.TextMessage
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
 import mu.KotlinLogging
+import java.util.concurrent.ExecutionException
 
 @LineMessageHandler
 class FuriganaController(
@@ -33,15 +35,15 @@ class FuriganaController(
 
     @EventMapping
     fun handleLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
-        val requestLocationMessageContent: LocationMessageContent = event.message
-                ?: throw IllegalArgumentException("Message is null")
-        val responseLocationMessage: LocationMessage? = LocationMessage.builder()
-                .title(requestLocationMessageContent.title)
-                .address(requestLocationMessageContent.address)
-                .latitude(requestLocationMessageContent.latitude)
-                .longitude(requestLocationMessageContent.longitude)
-                .build()
-        reply(event.replyToken, responseLocationMessage)
+//        val requestLocationMessageContent: LocationMessageContent = event.message
+//                ?: throw IllegalArgumentException("Message is null")
+//        val responseLocationMessage: LocationMessage? = LocationMessage.builder()
+//                .title(requestLocationMessageContent.title)
+//                .address(requestLocationMessageContent.address)
+//                .latitude(requestLocationMessageContent.latitude)
+//                .longitude(requestLocationMessageContent.longitude)
+//                .build()
+//        reply(event.replyToken, responseLocationMessage)
     }
 
     @EventMapping
@@ -51,13 +53,63 @@ class FuriganaController(
 
     @EventMapping
     fun handleTextMessageEvent(event: MessageEvent<TextMessageContent>) {
-        val newEvent = textMessageEventConverter.convert(event)
-
-        log.info { "=================" }
-        log.info { "TextMessageContent" }
         log.info { event }
-        log.info { newEvent }
-        log.info { "=================" }
+        checkNotNullTextMessageEvent(event)
+
+        val commandEvent = textMessageEventConverter.convert(event)
+        log.info { commandEvent }
+
+        val replyToken = commandEvent.replyToken
+        when (val command = commandEvent.message.command) {
+            is Buttons -> {
+            }
+            is Bye -> {
+
+            }
+            is Carousel -> {
+
+            }
+            is Confirm -> {
+
+            }
+            is Flex -> {
+
+            }
+            is ImageCarousel -> {
+
+            }
+            is ImageMap -> {
+
+            }
+            is Profile -> {
+
+            }
+            is QuickReply -> {
+
+            }
+            is Others -> {
+                replyText(replyToken, command.message)
+            }
+        }
+    }
+
+    // later, platform types have to be wrap out recursively in one command / annotation / ...
+    // may name it, type fixer.
+    private fun checkNotNullEvent(event: Event) {
+        checkNotNull(event.source)
+        checkNotNull(event.timestamp)
+    }
+
+    private fun checkNotNullMessageEvent(event: MessageEvent<*>) {
+        checkNotNullEvent(event)
+        checkNotNull(event.replyToken)
+        checkNotNull(event.message)
+    }
+
+    private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>) {
+        checkNotNullMessageEvent(event)
+        checkNotNull(event.message.id)
+        checkNotNull(event.message.text)
     }
 
     @EventMapping
@@ -122,12 +174,31 @@ class FuriganaController(
         TODO()
     }
 
-    private fun reply(replyToken: String?, message: Message?) {
-        TODO()
+    private fun reply(replyToken: String, message: Message) {
+        reply(replyToken, listOf(message))
     }
 
-    private fun reply(replyToken: String?, messages: List<Message?>?) {
-        TODO()
+    private fun reply(replyToken: String, messages: List<Message>) {
+        try {
+            val apiResponse = lineMessagingClient
+                    .replyMessage(ReplyMessage(replyToken, messages))
+                    .get()
+            log.info("Sent messages: {}", apiResponse)
+        } catch (e: InterruptedException) {
+            throw RuntimeException(e)
+        } catch (e: ExecutionException) {
+            throw RuntimeException(e)
+        }
+    }
+
+    private fun replyText(replyToken: String, message: String) {
+        var messageToReply = message
+        if (message.length > 1000) {
+            messageToReply = message.substring(0, 1000 - 2) + "……"
+        }
+
+        this.reply(replyToken, TextMessage(messageToReply))
+
     }
 
 }
