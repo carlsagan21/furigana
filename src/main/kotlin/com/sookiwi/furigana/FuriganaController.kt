@@ -100,7 +100,8 @@ class FuriganaController(
                 reply(replyToken, ExampleFlexMessageSupplier().get())
             }
             is ImageCarousel -> {
-                val imageUrl = createUri("/static/buttons/1040.jpg")
+                val imageUrl = createUri("/buttons/1040.jpg")
+
                 val imageCarouselTemplate = ImageCarouselTemplate(
                     listOf(
                         ImageCarouselColumn(
@@ -119,12 +120,13 @@ class FuriganaController(
                 )
 
                 val templateMessage = TemplateMessage("ImageCarousel alt text", imageCarouselTemplate)
+
                 reply(replyToken, templateMessage)
             }
             is ImageMap -> {
                 reply(
                     replyToken, ImagemapMessage(
-                        createUri("/static/rich"),
+                        createUri("/rich"),
                         "This is alt text",
                         ImagemapBaseSize(1040, 1040),
                         listOf(
@@ -165,31 +167,6 @@ class FuriganaController(
                 replyText(replyToken, command.message)
             }
         }
-    }
-
-    private fun createUri(path: String): String {
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-            .path(path).build()
-            .toUriString()
-    }
-
-    // later, platform types have to be wrap out recursively in one command / annotation / ...
-    // may name it, type fixer.
-    private fun checkNotNullEvent(event: Event) {
-        checkNotNull(event.source)
-        checkNotNull(event.timestamp)
-    }
-
-    private fun checkNotNullMessageEvent(event: MessageEvent<*>) {
-        checkNotNullEvent(event)
-        checkNotNull(event.replyToken)
-        checkNotNull(event.message)
-    }
-
-    private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>) {
-        checkNotNullMessageEvent(event)
-        checkNotNull(event.message.id)
-        checkNotNull(event.message.text)
     }
 
     @EventMapping
@@ -279,5 +256,32 @@ class FuriganaController(
         }
 
         this.reply(replyToken, TextMessage(messageToReply))
+    }
+
+    companion object {
+        private fun createUri(path: String): String {
+            return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path(path).build()
+                .toUriString()
+        }
+
+        // later, platform types have to be wrap out recursively in one command / annotation / ...
+        // may name it, type fixer.
+        private fun checkNotNullEvent(event: Event) {
+            checkNotNull(event.source)
+            checkNotNull(event.timestamp)
+        }
+
+        private fun checkNotNullMessageEvent(event: MessageEvent<*>) {
+            checkNotNullEvent(event)
+            checkNotNull(event.replyToken)
+            checkNotNull(event.message)
+        }
+
+        private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>) {
+            checkNotNullMessageEvent(event)
+            checkNotNull(event.message.id)
+            checkNotNull(event.message.text)
+        }
     }
 }
