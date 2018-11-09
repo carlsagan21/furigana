@@ -22,16 +22,16 @@ class TextMessageEventConverter
 
     override fun convert(messageEvent: MessageEvent<TextMessageContent>): MessageEvent<TextMessageCommandContent> =
             replaceEventMessage(messageEvent,
-                    when (messageEvent.message.text) {
+                    when (messageEvent.message.text.toLowerCase()) {
                         "buttons" -> Buttons
                         "bye" -> Bye(messageEvent.source)
                         "carousel" -> Carousel
                         "confirm" -> Confirm
                         "flex" -> Flex
-                        "imageCarousel" -> ImageCarousel
-                        "imageMap" -> ImageMap
+                        "imagecarousel" -> ImageCarousel
+                        "imagemap" -> ImageMap
                         "profile" -> Profile(messageEvent.source.userId)
-                        "quickReply" -> QuickReply
+                        "quickreply" -> QuickReply
                         else -> Others(messageEvent.message.text)
                     })
 
