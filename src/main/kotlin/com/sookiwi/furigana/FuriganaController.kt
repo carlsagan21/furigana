@@ -27,7 +27,9 @@ import com.linecorp.bot.model.event.message.VideoMessageContent
 import com.linecorp.bot.model.event.source.GroupSource
 import com.linecorp.bot.model.event.source.RoomSource
 import com.linecorp.bot.model.message.ImagemapMessage
+import com.linecorp.bot.model.message.LocationMessage
 import com.linecorp.bot.model.message.Message
+import com.linecorp.bot.model.message.StickerMessage
 import com.linecorp.bot.model.message.TemplateMessage
 import com.linecorp.bot.model.message.TextMessage
 import com.linecorp.bot.model.message.imagemap.ImagemapArea
@@ -71,20 +73,23 @@ class FuriganaController(
 
     @EventMapping
     fun handleLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
-//        val requestLocationMessageContent: LocationMessageContent = event.message
-//                ?: throw IllegalArgumentException("Message is null")
-//        val responseLocationMessage: LocationMessage? = LocationMessage.builder()
-//                .title(requestLocationMessageContent.title)
-//                .address(requestLocationMessageContent.address)
-//                .latitude(requestLocationMessageContent.latitude)
-//                .longitude(requestLocationMessageContent.longitude)
-//                .build()
-//        reply(event.replyToken, responseLocationMessage)
+        checkNotNullLocationMessageEvent(event)
+
+        val locationMessageContent = event.message
+        val replyLocationMessage = LocationMessage.builder()
+            .title(locationMessageContent.title)
+            .address(locationMessageContent.address)
+            .latitude(locationMessageContent.latitude)
+            .longitude(locationMessageContent.longitude)
+            .build()
+        reply(event.replyToken, replyLocationMessage)
     }
 
     @EventMapping
     fun handleStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
-        TODO()
+        checkNotNullStickerMessageEvent(event)
+
+        reply(event.replyToken, StickerMessage(event.message.packageId, event.message.stickerId))
     }
 
     @EventMapping
@@ -413,6 +418,20 @@ class FuriganaController(
             checkNotNullEvent(event)
             checkNotNull(event.replyToken)
             checkNotNull(event.message)
+        }
+
+        private fun checkNotNullLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
+            checkNotNullMessageEvent(event)
+            checkNotNull(event.message.id)
+            checkNotNull(event.message.title)
+            checkNotNull(event.message.address)
+        }
+
+        private fun checkNotNullStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
+            checkNotNullMessageEvent(event)
+            checkNotNull(event.message.id)
+            checkNotNull(event.message.packageId)
+            checkNotNull(event.message.stickerId)
         }
 
         private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>) {
