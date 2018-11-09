@@ -14,6 +14,7 @@ class FuriganaController(
         private val lineMessagingClient: LineMessagingClient
 ) {
     private val log = KotlinLogging.logger {}
+    private val textMessageEventConverter: TextMessageEventConverter = TextMessageEventConverter()
 
     @EventMapping
     fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
@@ -50,17 +51,12 @@ class FuriganaController(
 
     @EventMapping
     fun handleTextMessageEvent(event: MessageEvent<TextMessageContent>) {
+        val newEvent = textMessageEventConverter.convert(event)
+
         log.info { "=================" }
         log.info { "TextMessageContent" }
         log.info { event }
-        log.info { "=================" }
-    }
-
-    @EventMapping
-    fun handleNewTextMessageEvent(event: MessageEvent<NewTextMessageContent>) {
-        log.info { "=================" }
-        log.info { "NewTextMessageContent" }
-        log.info { event }
+        log.info { newEvent }
         log.info { "=================" }
     }
 
