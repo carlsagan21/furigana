@@ -25,6 +25,7 @@ import com.linecorp.bot.model.event.message.UnknownMessageContent
 import com.linecorp.bot.model.event.message.VideoMessageContent
 import com.linecorp.bot.model.message.ImagemapMessage
 import com.linecorp.bot.model.message.Message
+import com.linecorp.bot.model.message.TemplateMessage
 import com.linecorp.bot.model.message.TextMessage
 import com.linecorp.bot.model.message.imagemap.ImagemapArea
 import com.linecorp.bot.model.message.imagemap.ImagemapBaseSize
@@ -80,7 +81,6 @@ class FuriganaController(
 
     @EventMapping
     fun handleTextMessageEvent(event: MessageEvent<TextMessageContent>) {
-        log.info { event }
         checkNotNullTextMessageEvent(event)
 
         val commandEvent = textMessageEventConverter.convert(event)
@@ -101,7 +101,7 @@ class FuriganaController(
             }
             is ImageCarousel -> {
                 val imageUrl = createUri("/static/buttons/1040.jpg")
-                ImageCarouselTemplate(
+                val imageCarouselTemplate = ImageCarouselTemplate(
                     listOf(
                         ImageCarouselColumn(
                             imageUrl,
@@ -117,6 +117,9 @@ class FuriganaController(
                         )
                     )
                 )
+
+                val templateMessage = TemplateMessage("ImageCarousel alt text", imageCarouselTemplate)
+                reply(replyToken, templateMessage)
             }
             is ImageMap -> {
                 reply(
