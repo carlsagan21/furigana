@@ -73,7 +73,7 @@ class FuriganaController(
 
             }
             is Flex -> {
-
+                reply(replyToken, ExampleFlexMessageSupplier().get())
             }
             is ImageCarousel -> {
 
