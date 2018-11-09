@@ -85,7 +85,7 @@ class FuriganaController(
 
             }
             is QuickReply -> {
-
+                reply(replyToken, MessageWithQuickReplySupplier().get())
             }
             is Others -> {
                 replyText(replyToken, command.message)
