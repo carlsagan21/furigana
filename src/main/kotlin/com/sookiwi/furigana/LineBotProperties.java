@@ -1,25 +1,22 @@
 package com.sookiwi.furigana;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 @Component
 @ConfigurationProperties("line.bot")
 @Validated
 public class LineBotProperties {
 
-    @NotEmpty
-    private String channelToken;
+    private @NotEmpty String channelToken;
 
-    @NotEmpty
-    private String channelSecret;
+    private @NotEmpty String channelSecret;
 
-    @NotNull
-    private Handler handler;
+    private @NotNull Handler handler;
 
     public String getChannelToken() {
         return channelToken;
@@ -46,8 +43,7 @@ public class LineBotProperties {
     }
 
     public static class Handler {
-        @NotEmpty
-        private String path;
+        private @NotEmpty String path;
 
         public String getPath() {
             return path;

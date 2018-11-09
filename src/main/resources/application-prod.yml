@@ -1,0 +1,6 @@
+# Use heroku Config Vars
+line.bot:
+  channel-token: ${LINE_BOT_CHANNEL-TOKEN}
+  channel-secret: ${LINE_BOT_CHANNEL-SECRET}
+  handler.path: ${LINE_BOT_HANDLER_PATH}
+
