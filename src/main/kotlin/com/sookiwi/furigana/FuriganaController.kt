@@ -2,6 +2,7 @@ package com.sookiwi.furigana
 
 import com.linecorp.bot.client.LineMessagingClient
 import com.linecorp.bot.model.ReplyMessage
+import com.linecorp.bot.model.action.DatetimePickerAction
 import com.linecorp.bot.model.action.MessageAction
 import com.linecorp.bot.model.action.PostbackAction
 import com.linecorp.bot.model.action.URIAction
@@ -23,6 +24,8 @@ import com.linecorp.bot.model.event.message.StickerMessageContent
 import com.linecorp.bot.model.event.message.TextMessageContent
 import com.linecorp.bot.model.event.message.UnknownMessageContent
 import com.linecorp.bot.model.event.message.VideoMessageContent
+import com.linecorp.bot.model.event.source.GroupSource
+import com.linecorp.bot.model.event.source.RoomSource
 import com.linecorp.bot.model.message.ImagemapMessage
 import com.linecorp.bot.model.message.Message
 import com.linecorp.bot.model.message.TemplateMessage
@@ -31,12 +34,17 @@ import com.linecorp.bot.model.message.imagemap.ImagemapArea
 import com.linecorp.bot.model.message.imagemap.ImagemapBaseSize
 import com.linecorp.bot.model.message.imagemap.MessageImagemapAction
 import com.linecorp.bot.model.message.imagemap.URIImagemapAction
+import com.linecorp.bot.model.message.template.ButtonsTemplate
+import com.linecorp.bot.model.message.template.CarouselColumn
+import com.linecorp.bot.model.message.template.CarouselTemplate
+import com.linecorp.bot.model.message.template.ConfirmTemplate
 import com.linecorp.bot.model.message.template.ImageCarouselColumn
 import com.linecorp.bot.model.message.template.ImageCarouselTemplate
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
 import mu.KotlinLogging
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.util.Arrays
 import java.util.concurrent.ExecutionException
 
 @LineMessageHandler
@@ -89,12 +97,115 @@ class FuriganaController(
         val replyToken = commandEvent.replyToken
         when (val command = commandEvent.message.command) {
             is Buttons -> {
+                val imageUrl = createUri("/buttons/1040.jpg")
+                val buttonsTemplate = ButtonsTemplate(
+                    imageUrl,
+                    "My button sample",
+                    "Hello, my button",
+                    listOf(
+                        URIAction("Go to line.me", "https://line.me"),
+                        PostbackAction("Say hello1", "hello こんにちは"),
+                        PostbackAction("言 hello2", "hello こんにちは", "hello こんにちは"),
+                        MessageAction("Say message", "Rice=米")
+                    )
+                )
+                val templateMessage = TemplateMessage("Button alt text", buttonsTemplate)
+                reply(replyToken, templateMessage)
             }
             is Bye -> {
+                val source = command.source
+                when (source) {
+                    is GroupSource -> {
+                        replyText(replyToken, "Leaving group")
+                        lineMessagingClient.leaveGroup(source.groupId).get()
+                    }
+                    is RoomSource -> {
+                        replyText(replyToken, "Leaving room")
+                        lineMessagingClient.leaveRoom(source.roomId).get()
+                    }
+                    else -> replyText(replyToken, "Bot can't leave from 1:1 chat")
+                }
             }
             is Carousel -> {
+                val imageUrl = createUri("/buttons/1040.jpg")
+                val carouselTemplate = CarouselTemplate(
+                    Arrays.asList(
+                        CarouselColumn(
+                            imageUrl, "hoge", "fuga", listOf(
+                                URIAction(
+                                    "Go to line.me",
+                                    "https://line.me"
+                                ),
+                                URIAction(
+                                    "Go to line.me",
+                                    "https://line.me"
+                                ),
+                                PostbackAction(
+                                    "Say hello1",
+                                    "hello こんにちは"
+                                )
+                            )
+                        ),
+                        CarouselColumn(
+                            imageUrl, "hoge", "fuga", listOf(
+                                PostbackAction(
+                                    "言 hello2",
+                                    "hello こんにちは",
+                                    "hello こんにちは"
+                                ),
+                                PostbackAction(
+                                    "言 hello2",
+                                    "hello こんにちは",
+                                    "hello こんにちは"
+                                ),
+                                MessageAction(
+                                    "Say message",
+                                    "Rice=米"
+                                )
+                            )
+                        ),
+                        CarouselColumn(
+                            imageUrl, "Datetime Picker",
+                            "Please select a date, time or datetime", listOf(
+                                DatetimePickerAction(
+                                    "Datetime",
+                                    "action=sel",
+                                    "datetime",
+                                    "2017-06-18T06:15",
+                                    "2100-12-31T23:59",
+                                    "1900-01-01T00:00"
+                                ),
+                                DatetimePickerAction(
+                                    "Date",
+                                    "action=sel&only=date",
+                                    "date",
+                                    "2017-06-18",
+                                    "2100-12-31",
+                                    "1900-01-01"
+                                ),
+                                DatetimePickerAction(
+                                    "Time",
+                                    "action=sel&only=time",
+                                    "time",
+                                    "06:15",
+                                    "23:59",
+                                    "00:00"
+                                )
+                            )
+                        )
+                    )
+                )
+                val templateMessage = TemplateMessage("Carousel alt text", carouselTemplate)
+                this.reply(replyToken, templateMessage)
             }
             is Confirm -> {
+                val confirmTemplate = ConfirmTemplate(
+                    "Do it?",
+                    MessageAction("Yes", "Yes!"),
+                    MessageAction("No", "No!")
+                )
+                val templateMessage = TemplateMessage("Confirm alt text", confirmTemplate)
+                reply(replyToken, templateMessage)
             }
             is Flex -> {
                 reply(replyToken, ExampleFlexMessageSupplier().get())
@@ -159,6 +270,32 @@ class FuriganaController(
                 )
             }
             is Profile -> {
+                val userId = command.userId
+                if (userId != null) {
+                    lineMessagingClient
+                        .getProfile(userId)
+                        .whenComplete { profile, throwable ->
+                            if (throwable != null) {
+                                replyText(
+                                    replyToken,
+                                    throwable.message ?: "Fail to get profile without error message."
+                                )
+                                return@whenComplete
+                            }
+
+                            reply(
+                                replyToken,
+                                Arrays.asList<Message>(
+                                    TextMessage(
+                                        "Display name: " + profile.displayName
+                                    ),
+                                    TextMessage("Status message: " + profile.statusMessage)
+                                )
+                            )
+                        }
+                } else {
+                    replyText(replyToken, "Bot can't use profile API without user ID")
+                }
             }
             is QuickReply -> {
                 reply(replyToken, MessageWithQuickReplySupplier().get())
@@ -180,7 +317,7 @@ class FuriganaController(
     }
 
     // Indicates that the user has linked their LINE account with a provider's (your) service account.
-    // You can reply to this events. For more information, see Linking user accounts.
+// You can reply to this events. For more information, see Linking user accounts.
     @EventMapping
     fun handleAccountLinkEvent(event: AccountLinkEvent) {
         TODO()
@@ -255,7 +392,7 @@ class FuriganaController(
             messageToReply = message.substring(0, 1000 - 2) + "……"
         }
 
-        this.reply(replyToken, TextMessage(messageToReply))
+        reply(replyToken, TextMessage(messageToReply))
     }
 
     companion object {

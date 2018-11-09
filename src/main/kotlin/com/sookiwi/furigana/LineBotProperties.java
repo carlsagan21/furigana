@@ -11,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties("line.bot")
 @Validated
 public class LineBotProperties {
-
     private @NotEmpty String channelToken;
 
     private @NotEmpty String channelSecret;
