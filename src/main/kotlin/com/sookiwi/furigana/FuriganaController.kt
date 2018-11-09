@@ -1,11 +1,8 @@
 package com.sookiwi.furigana
 
 import com.linecorp.bot.client.LineMessagingClient
-import com.linecorp.bot.model.event.MessageEvent
-import com.linecorp.bot.model.event.message.ImageMessageContent
-import com.linecorp.bot.model.event.message.LocationMessageContent
-import com.linecorp.bot.model.event.message.StickerMessageContent
-import com.linecorp.bot.model.event.message.TextMessageContent
+import com.linecorp.bot.model.event.*
+import com.linecorp.bot.model.event.message.*
 import com.linecorp.bot.model.message.LocationMessage
 import com.linecorp.bot.model.message.Message
 import com.linecorp.bot.spring.boot.annotation.EventMapping
@@ -19,13 +16,18 @@ class FuriganaController(
     private val logger = KotlinLogging.logger {}
 
     @EventMapping
-    fun handleTextMessageEvent(event: MessageEvent<TextMessageContent>) {
-        handleTextContent(event.replyToken, event, event.message)
+    fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
+        TODO()
     }
 
     @EventMapping
-    fun handleStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
-        handleStickerContent(event.replyToken, event.message)
+    fun handleFileMessageEvent(event: MessageEvent<FileMessageContent>) {
+        TODO()
+    }
+
+    @EventMapping
+    fun handleImageMessageEvent(event: MessageEvent<ImageMessageContent>) {
+        TODO()
     }
 
     @EventMapping
@@ -42,31 +44,94 @@ class FuriganaController(
     }
 
     @EventMapping
-    fun handleImageMessageEvent(event: MessageEvent<ImageMessageContent>) {
-//        handleHeavyContent(
-//                event.replyToken,
-//                event.message.id,
-//                responseBody -> {
-//
-//        }
-//        )
-        // TODO
+    fun handleStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
+        TODO()
+    }
+
+//    @EventMapping
+//    fun handleTextMessageEvent(event: MessageEvent<TextMessageContent>) {
+//        logger.info { "=================" }
+//        logger.info { "TextMessageContent" }
+//        logger.info { event }
+//        logger.info { "=================" }
+//    }
+
+    @EventMapping
+    fun handleTextMessageEvent(event: MessageEvent<NewTextMessageContent>) {
+        logger.info { "=================" }
+        logger.info { "NewTextMessageContent" }
+        logger.info { event }
+        logger.info { "=================" }
+    }
+
+    @EventMapping
+    fun handleUnknownMessageEvent(event: MessageEvent<UnknownMessageContent>) {
+        TODO()
+    }
+
+    @EventMapping
+    fun handleVideoMessageEvent(event: MessageEvent<VideoMessageContent>) {
+        TODO()
+    }
+
+    // Indicates that the user has linked their LINE account with a provider's (your) service account. You can reply to this events. For more information, see Linking user accounts.
+    @EventMapping
+    fun handleAccountLinkEvent(event: AccountLinkEvent) {
+        TODO()
+    }
+
+    // Indicates that the user performed a postback action. You can reply to this events.
+    @EventMapping
+    fun handleBeaconEvent(event: BeaconEvent) {
+        TODO()
+    }
+
+    // Indicates that your account was added as a friend (or unblocked). You can reply to this events.
+    @EventMapping
+    fun handleFollowEvent(event: FollowEvent) {
+        TODO()
+    }
+
+    // Indicates that your bot joined a group chat.
+    @EventMapping
+    fun handleJoinEvent(event: JoinEvent) {
+        TODO()
+    }
+
+    // Indicates that a user deleted your bot from a group or that your bot left a group or room.
+    @EventMapping
+    fun handleLeaveEvent(event: LeaveEvent) {
+        TODO()
+    }
+
+    // Indicates that the user performed a postback action. You can reply to this events.
+    @EventMapping
+    fun handlePostbackEvent(event: PostbackEvent) {
+        TODO()
+    }
+
+    // Indicates that your account was blocked.
+    @EventMapping
+    fun handleUnfollowEvent(event: UnfollowEvent) {
+        TODO()
+    }
+
+    @EventMapping
+    fun handleUnknownEvent(event: UnknownEvent) {
+        TODO()
+    }
+
+    @EventMapping
+    fun handleOtherEvent(event: Event) {
+        TODO()
     }
 
     private fun reply(replyToken: String?, message: Message?) {
-//        reply(replyToken, Collections.singletonList(message))
+        TODO()
     }
 
     private fun reply(replyToken: String?, messages: List<Message?>?) {
-//        TODO()
-    }
-
-    private fun handleTextContent(replyToken: String?, event: MessageEvent<TextMessageContent>, message: TextMessageContent?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    private fun handleStickerContent(replyToken: String?, message: StickerMessageContent?) {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO()
     }
 
 }
