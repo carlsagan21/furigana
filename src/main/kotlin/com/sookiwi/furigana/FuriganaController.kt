@@ -77,7 +77,7 @@ class FuriganaController(
 
         val locationMessageContent = event.message
         val replyLocationMessage = LocationMessage.builder()
-            .title(locationMessageContent.title)
+            .title(locationMessageContent.title ?: "No title")
             .address(locationMessageContent.address)
             .latitude(locationMessageContent.latitude)
             .longitude(locationMessageContent.longitude)
@@ -423,7 +423,6 @@ class FuriganaController(
         private fun checkNotNullLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
             checkNotNullMessageEvent(event)
             checkNotNull(event.message.id)
-            checkNotNull(event.message.title)
             checkNotNull(event.message.address)
         }
 
