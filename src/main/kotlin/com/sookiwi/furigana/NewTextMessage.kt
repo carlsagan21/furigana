@@ -3,6 +3,7 @@ package com.sookiwi.furigana
 import com.linecorp.bot.model.event.MessageEvent
 import com.linecorp.bot.model.event.message.TextMessageContent
 import com.linecorp.bot.model.event.source.Source
+import mu.KotlinLogging
 import org.springframework.core.convert.converter.Converter
 
 sealed class NewTextMessage
@@ -19,28 +20,38 @@ object Others : NewTextMessage()
 
 class TextMessageEventConverter
     : Converter<MessageEvent<TextMessageContent>, MessageEvent<NewTextMessageContent>> {
-    override fun convert(messageEvent: MessageEvent<TextMessageContent>): MessageEvent<NewTextMessageContent> =
-            replaceEventMessage(messageEvent,
-                    when (messageEvent.message.text ?: throw IllegalArgumentException()) {
-                        "buttons" -> Buttons
-                        "bye" -> Bye(messageEvent.source)
-                        "carousel" -> Carousel
-                        "confirm" -> Confirm
-                        "flex" -> Flex
-                        "imageCarousel" -> ImageCarousel
-                        "imageMap" -> ImageMap
-                        "profile" -> Profile(messageEvent.source.userId)
-                        "quickReply" -> QuickReply
-                        else -> Others
-                    })
+    private val log = KotlinLogging.logger {}
+
+    override fun convert(messageEvent: MessageEvent<TextMessageContent>): MessageEvent<NewTextMessageContent> {
+        log.info { "TextMessageEventConverter.convert" }
+        log.info { messageEvent }
+
+        return replaceEventMessage(messageEvent,
+                when (messageEvent.message.text ?: throw IllegalArgumentException()) {
+                    "buttons" -> Buttons
+                    "bye" -> Bye(messageEvent.source)
+                    "carousel" -> Carousel
+                    "confirm" -> Confirm
+                    "flex" -> Flex
+                    "imageCarousel" -> ImageCarousel
+                    "imageMap" -> ImageMap
+                    "profile" -> Profile(messageEvent.source.userId)
+                    "quickReply" -> QuickReply
+                    else -> Others
+                })
+    }
 
     private fun replaceEventMessage(origin: MessageEvent<TextMessageContent>, message: NewTextMessage)
-            : MessageEvent<NewTextMessageContent> =
-            MessageEvent(
-                    origin.replyToken,
-                    origin.source,
-                    NewTextMessageContent(origin.message.id, message),
-                    origin.timestamp
-            )
+            : MessageEvent<NewTextMessageContent> {
+        log.info { "TextMessageEventConverter.replaceEventMessage" }
+        log.info { message }
+
+        return MessageEvent(
+                origin.replyToken,
+                origin.source,
+                NewTextMessageContent(origin.message.id, message),
+                origin.timestamp
+        )
+    }
 }
 
