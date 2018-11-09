@@ -2,18 +2,45 @@ package com.sookiwi.furigana
 
 import com.linecorp.bot.client.LineMessagingClient
 import com.linecorp.bot.model.ReplyMessage
-import com.linecorp.bot.model.event.*
-import com.linecorp.bot.model.event.message.*
+import com.linecorp.bot.model.action.MessageAction
+import com.linecorp.bot.model.action.PostbackAction
+import com.linecorp.bot.model.action.URIAction
+import com.linecorp.bot.model.event.AccountLinkEvent
+import com.linecorp.bot.model.event.BeaconEvent
+import com.linecorp.bot.model.event.Event
+import com.linecorp.bot.model.event.FollowEvent
+import com.linecorp.bot.model.event.JoinEvent
+import com.linecorp.bot.model.event.LeaveEvent
+import com.linecorp.bot.model.event.MessageEvent
+import com.linecorp.bot.model.event.PostbackEvent
+import com.linecorp.bot.model.event.UnfollowEvent
+import com.linecorp.bot.model.event.UnknownEvent
+import com.linecorp.bot.model.event.message.AudioMessageContent
+import com.linecorp.bot.model.event.message.FileMessageContent
+import com.linecorp.bot.model.event.message.ImageMessageContent
+import com.linecorp.bot.model.event.message.LocationMessageContent
+import com.linecorp.bot.model.event.message.StickerMessageContent
+import com.linecorp.bot.model.event.message.TextMessageContent
+import com.linecorp.bot.model.event.message.UnknownMessageContent
+import com.linecorp.bot.model.event.message.VideoMessageContent
+import com.linecorp.bot.model.message.ImagemapMessage
 import com.linecorp.bot.model.message.Message
 import com.linecorp.bot.model.message.TextMessage
+import com.linecorp.bot.model.message.imagemap.ImagemapArea
+import com.linecorp.bot.model.message.imagemap.ImagemapBaseSize
+import com.linecorp.bot.model.message.imagemap.MessageImagemapAction
+import com.linecorp.bot.model.message.imagemap.URIImagemapAction
+import com.linecorp.bot.model.message.template.ImageCarouselColumn
+import com.linecorp.bot.model.message.template.ImageCarouselTemplate
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
 import mu.KotlinLogging
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.util.concurrent.ExecutionException
 
 @LineMessageHandler
 class FuriganaController(
-        private val lineMessagingClient: LineMessagingClient
+    private val lineMessagingClient: LineMessagingClient
 ) {
     private val log = KotlinLogging.logger {}
     private val textMessageEventConverter: TextMessageEventConverter = TextMessageEventConverter()
@@ -64,25 +91,69 @@ class FuriganaController(
             is Buttons -> {
             }
             is Bye -> {
-
             }
             is Carousel -> {
-
             }
             is Confirm -> {
-
             }
             is Flex -> {
                 reply(replyToken, ExampleFlexMessageSupplier().get())
             }
             is ImageCarousel -> {
-
+                val imageUrl = createUri("/static/buttons/1040.jpg")
+                ImageCarouselTemplate(
+                    listOf(
+                        ImageCarouselColumn(
+                            imageUrl,
+                            URIAction("Goto line.me", "https://line.me")
+                        ),
+                        ImageCarouselColumn(
+                            imageUrl,
+                            MessageAction("Say message", "Rice=米")
+                        ),
+                        ImageCarouselColumn(
+                            imageUrl,
+                            PostbackAction("言 hello2", "hello こんにちは", "hello こんにちは")
+                        )
+                    )
+                )
             }
             is ImageMap -> {
-
+                reply(
+                    replyToken, ImagemapMessage(
+                        createUri("/static/rich"),
+                        "This is alt text",
+                        ImagemapBaseSize(1040, 1040),
+                        listOf(
+                            URIImagemapAction(
+                                "https://store.line.me/family/manga/en",
+                                ImagemapArea(
+                                    0, 0, 520, 520
+                                )
+                            ),
+                            URIImagemapAction(
+                                "https://store.line.me/family/music/en",
+                                ImagemapArea(
+                                    520, 0, 520, 520
+                                )
+                            ),
+                            URIImagemapAction(
+                                "https://store.line.me/family/play/en",
+                                ImagemapArea(
+                                    0, 520, 520, 520
+                                )
+                            ),
+                            MessageImagemapAction(
+                                "URANAI!",
+                                ImagemapArea(
+                                    520, 520, 520, 520
+                                )
+                            )
+                        )
+                    )
+                )
             }
             is Profile -> {
-
             }
             is QuickReply -> {
                 reply(replyToken, MessageWithQuickReplySupplier().get())
@@ -91,6 +162,12 @@ class FuriganaController(
                 replyText(replyToken, command.message)
             }
         }
+    }
+
+    private fun createUri(path: String): String {
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+            .path(path).build()
+            .toUriString()
     }
 
     // later, platform types have to be wrap out recursively in one command / annotation / ...
@@ -122,7 +199,8 @@ class FuriganaController(
         TODO()
     }
 
-    // Indicates that the user has linked their LINE account with a provider's (your) service account. You can reply to this events. For more information, see Linking user accounts.
+    // Indicates that the user has linked their LINE account with a provider's (your) service account.
+    // You can reply to this events. For more information, see Linking user accounts.
     @EventMapping
     fun handleAccountLinkEvent(event: AccountLinkEvent) {
         TODO()
@@ -181,8 +259,8 @@ class FuriganaController(
     private fun reply(replyToken: String, messages: List<Message>) {
         try {
             val apiResponse = lineMessagingClient
-                    .replyMessage(ReplyMessage(replyToken, messages))
-                    .get()
+                .replyMessage(ReplyMessage(replyToken, messages))
+                .get()
             log.info("Sent messages: {}", apiResponse)
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
@@ -198,7 +276,5 @@ class FuriganaController(
         }
 
         this.reply(replyToken, TextMessage(messageToReply))
-
     }
-
 }

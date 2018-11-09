@@ -21,26 +21,26 @@ class TextMessageEventConverter
     : Converter<MessageEvent<TextMessageContent>, MessageEvent<TextMessageCommandContent>> {
 
     override fun convert(messageEvent: MessageEvent<TextMessageContent>): MessageEvent<TextMessageCommandContent> =
-            replaceEventMessage(messageEvent,
-                    when (messageEvent.message.text.toLowerCase()) {
-                        "buttons" -> Buttons
-                        "bye" -> Bye(messageEvent.source)
-                        "carousel" -> Carousel
-                        "confirm" -> Confirm
-                        "flex" -> Flex
-                        "imagecarousel" -> ImageCarousel
-                        "imagemap" -> ImageMap
-                        "profile" -> Profile(messageEvent.source.userId)
-                        "quickreply" -> QuickReply
-                        else -> Others(messageEvent.message.text)
-                    })
+        replaceEventMessage(
+            messageEvent,
+            when (messageEvent.message.text.toLowerCase()) {
+                "buttons" -> Buttons
+                "bye" -> Bye(messageEvent.source)
+                "carousel" -> Carousel
+                "confirm" -> Confirm
+                "flex" -> Flex
+                "imagecarousel" -> ImageCarousel
+                "imagemap" -> ImageMap
+                "profile" -> Profile(messageEvent.source.userId)
+                "quickreply" -> QuickReply
+                else -> Others(messageEvent.message.text)
+            }
+        )
 
-    private fun replaceEventMessage(origin: MessageEvent<TextMessageContent>, command: TextMessageCommand)
-            : MessageEvent<TextMessageCommandContent> = MessageEvent(
-            origin.replyToken,
-            origin.source,
-            TextMessageCommandContent(origin.message.id, command),
-            origin.timestamp
+    private fun replaceEventMessage(origin: MessageEvent<TextMessageContent>, command: TextMessageCommand): MessageEvent<TextMessageCommandContent> = MessageEvent(
+        origin.replyToken,
+        origin.source,
+        TextMessageCommandContent(origin.message.id, command),
+        origin.timestamp
     )
 }
-
