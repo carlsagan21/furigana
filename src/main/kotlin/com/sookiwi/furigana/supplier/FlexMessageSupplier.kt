@@ -1,4 +1,4 @@
-package com.sookiwi.furigana
+package com.sookiwi.furigana.supplier
 
 import com.linecorp.bot.model.action.URIAction
 import com.linecorp.bot.model.message.FlexMessage
@@ -16,7 +16,7 @@ import com.linecorp.bot.model.message.flex.unit.FlexLayout
 import com.linecorp.bot.model.message.flex.unit.FlexMarginSize
 import java.util.function.Supplier
 
-class ExampleFlexMessageSupplier : Supplier<FlexMessage> {
+class FlexMessageSupplier : Supplier<FlexMessage> {
     override fun get(): FlexMessage {
         val heroBlock = Image.builder()
             .url("https://example.com/cafe.jpg")

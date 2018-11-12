@@ -44,11 +44,11 @@ import com.linecorp.bot.model.message.template.ImageCarouselColumn
 import com.linecorp.bot.model.message.template.ImageCarouselTemplate
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
-import com.sookiwi.furigana.ExampleFlexMessageSupplier
 import com.sookiwi.furigana.LineBotProperties
-import com.sookiwi.furigana.MessageWithQuickReplySupplier
 import com.sookiwi.furigana.dto.ResultSet
 import com.sookiwi.furigana.exception.YahooFuriganaException
+import com.sookiwi.furigana.supplier.FlexMessageSupplier
+import com.sookiwi.furigana.supplier.MessageWithQuickReplySupplier
 import com.sookiwi.furigana.textMessageModel.Buttons
 import com.sookiwi.furigana.textMessageModel.Bye
 import com.sookiwi.furigana.textMessageModel.Carousel
@@ -242,7 +242,7 @@ class FuriganaController(
                 reply(replyToken, templateMessage)
             }
             is Flex -> {
-                reply(replyToken, ExampleFlexMessageSupplier().get())
+                reply(replyToken, FlexMessageSupplier().get())
             }
             is ImageCarousel -> {
                 val imageUrl =

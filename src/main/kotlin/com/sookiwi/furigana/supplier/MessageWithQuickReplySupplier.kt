@@ -1,4 +1,4 @@
-package com.sookiwi.furigana
+package com.sookiwi.furigana.supplier
 
 import com.linecorp.bot.model.action.CameraAction
 import com.linecorp.bot.model.action.CameraRollAction
