@@ -19,6 +19,8 @@ public class LineBotProperties {
 
     private @NotNull String yahoojpAppid;
 
+    private @NotNull String giphyAppKey;
+
     public String getChannelToken() {
         return channelToken;
     }
@@ -49,6 +51,14 @@ public class LineBotProperties {
 
     public void setYahoojpAppid(final String yahoojpAppid) {
         this.yahoojpAppid = yahoojpAppid;
+    }
+
+    public String getGiphyAppKey() {
+        return giphyAppKey;
+    }
+
+    public void setGiphyAppKey(final String giphyAppKey) {
+        this.giphyAppKey = giphyAppKey;
     }
 
     public static class Handler {

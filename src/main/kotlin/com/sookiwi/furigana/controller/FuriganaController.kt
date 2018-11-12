@@ -1,5 +1,6 @@
 package com.sookiwi.furigana.controller
 
+import com.jayway.jsonpath.JsonPath
 import com.linecorp.bot.client.LineMessagingClient
 import com.linecorp.bot.model.ReplyMessage
 import com.linecorp.bot.model.action.DatetimePickerAction
@@ -32,6 +33,7 @@ import com.linecorp.bot.model.message.Message
 import com.linecorp.bot.model.message.StickerMessage
 import com.linecorp.bot.model.message.TemplateMessage
 import com.linecorp.bot.model.message.TextMessage
+import com.linecorp.bot.model.message.VideoMessage
 import com.linecorp.bot.model.message.imagemap.ImagemapArea
 import com.linecorp.bot.model.message.imagemap.ImagemapBaseSize
 import com.linecorp.bot.model.message.imagemap.MessageImagemapAction
@@ -54,6 +56,8 @@ import com.sookiwi.furigana.textMessageModel.Bye
 import com.sookiwi.furigana.textMessageModel.Carousel
 import com.sookiwi.furigana.textMessageModel.Confirm
 import com.sookiwi.furigana.textMessageModel.Flex
+import com.sookiwi.furigana.textMessageModel.Furi
+import com.sookiwi.furigana.textMessageModel.Gif
 import com.sookiwi.furigana.textMessageModel.ImageCarousel
 import com.sookiwi.furigana.textMessageModel.ImageMap
 import com.sookiwi.furigana.textMessageModel.Others
@@ -77,11 +81,9 @@ class FuriganaController(
     private val lineBotProperties: LineBotProperties
 ) {
     private val log = KotlinLogging.logger {}
-    private val textMessageEventConverter: TextMessageEventConverter =
-        TextMessageEventConverter()
+    private val textMessageEventConverter: TextMessageEventConverter = TextMessageEventConverter()
 
-    private val yahooFuriganaClient = WebClient.builder()
-        .baseUrl("https://jlp.yahooapis.jp/FuriganaService/V1/furigana")
+    private val webClient = WebClient.builder()
         .build()
 
     @EventMapping
@@ -131,7 +133,7 @@ class FuriganaController(
         when (val command = commandEvent.message.command) {
             is Buttons -> {
                 val imageUrl =
-                    createUri("/buttons/1040.jpg")
+                    createStaticFileUri("/buttons/1040.jpg")
                 val buttonsTemplate = ButtonsTemplate(
                     imageUrl,
                     "My button sample",
@@ -162,7 +164,7 @@ class FuriganaController(
             }
             is Carousel -> {
                 val imageUrl =
-                    createUri("/buttons/1040.jpg")
+                    createStaticFileUri("/buttons/1040.jpg")
                 val carouselTemplate = CarouselTemplate(
                     Arrays.asList(
                         CarouselColumn(
@@ -247,7 +249,7 @@ class FuriganaController(
             }
             is ImageCarousel -> {
                 val imageUrl =
-                    createUri("/buttons/1040.jpg")
+                    createStaticFileUri("/buttons/1040.jpg")
 
                 val imageCarouselTemplate = ImageCarouselTemplate(
                     listOf(
@@ -273,7 +275,7 @@ class FuriganaController(
             is ImageMap -> {
                 reply(
                     replyToken, ImagemapMessage(
-                        createUri("/rich"),
+                        createStaticFileUri("/rich"),
                         "This is alt text",
                         ImagemapBaseSize(1040, 1040),
                         listOf(
@@ -336,10 +338,12 @@ class FuriganaController(
             is QuickReply -> {
                 reply(replyToken, MessageWithQuickReplySupplier().get())
             }
-            is Others -> {
-                yahooFuriganaClient.get()
+            is Furi -> {
+                webClient.get()
                     .uri {
-                        it
+                        it.scheme("https")
+                            .host("jlp.yahooapis.jp")
+                            .path("/FuriganaService/V1/furigana")
                             .queryParam("appid", lineBotProperties.yahoojpAppid)
                             .queryParam(
                                 "sentence",
@@ -374,6 +378,35 @@ class FuriganaController(
                             else -> throw YahooFuriganaException("Yahoo API returned an unexpected status code.")
                         }
                     })
+            }
+            is Gif -> {
+
+                webClient.get()
+                    .uri {
+                        it.scheme("https")
+                            .host("api.giphy.com")
+                            .path("/v1/gifs/translate")
+                            .queryParam("api_key", lineBotProperties.giphyAppKey)
+                            .queryParam("s", URLEncoder.encode(command.message, "UTF-8"))
+                            .build()
+                    }
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .subscribe { jsonString ->
+                        val fixedWidthUrl = JsonPath.read<String>(jsonString, "$.data.images.fixed_width.url")
+                        val fixedWidthMp4 = JsonPath.read<String>(jsonString, "$.data.images.fixed_width.mp4")
+
+                        reply(
+                            event.replyToken,
+                            VideoMessage(
+                                fixedWidthMp4,
+                                fixedWidthUrl
+                            )
+                        )
+                    }
+            }
+            is Others -> {
+                replyText(event.replyToken, "echo ${command.message}")
             }
         }
     }
@@ -468,7 +501,7 @@ class FuriganaController(
     }
 
     companion object {
-        private fun createUri(path: String): String {
+        private fun createStaticFileUri(path: String): String {
             return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(path).build()
                 .toUriString()
