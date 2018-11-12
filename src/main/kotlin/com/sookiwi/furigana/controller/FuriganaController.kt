@@ -68,6 +68,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.Arrays
+import java.util.StringJoiner
 import java.util.concurrent.ExecutionException
 
 @LineMessageHandler
@@ -349,19 +350,18 @@ class FuriganaController(
                     .accept(MediaType.TEXT_XML)
                     .acceptCharset(StandardCharsets.UTF_8)
                     .retrieve()
-//                    .onStatus(HttpStatus::is5xxServerError) { Mono.error(YahooFuriganaException) }
                     .bodyToMono(ResultSet::class.java)
                     .subscribe({ resultSet ->
-                        val sb = StringBuilder()
+                        val stringJoiner = StringJoiner(" ")
                         resultSet.result.forEach { result ->
                             result.wordList.forEach { wordList ->
                                 wordList.word.forEach { word ->
-                                    sb.append(word.furigana ?: word.surface)
+                                    stringJoiner.add(word.furigana ?: word.surface)
                                 }
                             }
                         }
 
-                        val resultString = sb.toString()
+                        val resultString = stringJoiner.toString()
 
                         log.info { resultString }
                         replyText(replyToken, resultString)
@@ -389,7 +389,7 @@ class FuriganaController(
     }
 
     // Indicates that the user has linked their LINE account with a provider's (your) service account.
-// You can reply to this events. For more information, see Linking user accounts.
+    // You can reply to this events. For more information, see Linking user accounts.
     @EventMapping
     fun handleAccountLinkEvent(event: AccountLinkEvent) {
         TODO()
