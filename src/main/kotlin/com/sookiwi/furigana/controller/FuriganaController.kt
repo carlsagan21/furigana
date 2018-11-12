@@ -60,7 +60,6 @@ import com.sookiwi.furigana.textMessageModel.Furi
 import com.sookiwi.furigana.textMessageModel.Gif
 import com.sookiwi.furigana.textMessageModel.ImageCarousel
 import com.sookiwi.furigana.textMessageModel.ImageMap
-import com.sookiwi.furigana.textMessageModel.Others
 import com.sookiwi.furigana.textMessageModel.Profile
 import com.sookiwi.furigana.textMessageModel.QuickReply
 import com.sookiwi.furigana.textMessageModel.TextMessageEventConverter
@@ -404,9 +403,6 @@ class FuriganaController(
                             )
                         )
                     }
-            }
-            is Others -> {
-                replyText(event.replyToken, "echo ${command.message}")
             }
         }
     }

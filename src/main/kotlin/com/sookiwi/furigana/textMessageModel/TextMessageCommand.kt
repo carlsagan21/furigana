@@ -18,7 +18,6 @@ data class Profile(val userId: String?) : TextMessageCommand()
 object QuickReply : TextMessageCommand()
 data class Furi(val message: String) : TextMessageCommand()
 data class Gif(val message: String) : TextMessageCommand()
-data class Others(val message: String) : TextMessageCommand()
 
 class TextMessageEventConverter
     : Converter<MessageEvent<TextMessageContent>, MessageEvent<TextMessageCommandContent>> {
@@ -48,7 +47,7 @@ class TextMessageEventConverter
                     }
                     Gif(splitMessage.last())
                 }
-                else -> Others(messageEvent.message.text)
+                else -> Furi(messageEvent.message.text)
             }
         )
     }
