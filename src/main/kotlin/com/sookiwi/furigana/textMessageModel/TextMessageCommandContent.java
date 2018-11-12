@@ -1,4 +1,4 @@
-package com.sookiwi.furigana;
+package com.sookiwi.furigana.textMessageModel;
 
 import com.linecorp.bot.model.event.message.MessageContent;
 
@@ -12,9 +12,9 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class TextMessageCommandContent implements MessageContent {
     @NonNull
-    String id;
+    public String id;
     @NonNull
-    TextMessageCommand command;
+    public TextMessageCommand command;
 
     public TextMessageCommandContent(final String id, final TextMessageCommand command) {
         this.id = id;

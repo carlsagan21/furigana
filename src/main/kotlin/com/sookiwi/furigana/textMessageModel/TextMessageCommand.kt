@@ -1,4 +1,4 @@
-package com.sookiwi.furigana
+package com.sookiwi.furigana.textMessageModel
 
 import com.linecorp.bot.model.event.MessageEvent
 import com.linecorp.bot.model.event.message.TextMessageContent

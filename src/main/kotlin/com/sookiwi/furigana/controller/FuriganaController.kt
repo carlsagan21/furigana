@@ -1,4 +1,4 @@
-package com.sookiwi.furigana
+package com.sookiwi.furigana.controller
 
 import com.linecorp.bot.client.LineMessagingClient
 import com.linecorp.bot.model.ReplyMessage
@@ -44,17 +44,44 @@ import com.linecorp.bot.model.message.template.ImageCarouselColumn
 import com.linecorp.bot.model.message.template.ImageCarouselTemplate
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
+import com.sookiwi.furigana.ExampleFlexMessageSupplier
+import com.sookiwi.furigana.LineBotProperties
+import com.sookiwi.furigana.MessageWithQuickReplySupplier
+import com.sookiwi.furigana.dto.ResultSet
+import com.sookiwi.furigana.exception.YahooFuriganaException
+import com.sookiwi.furigana.textMessageModel.Buttons
+import com.sookiwi.furigana.textMessageModel.Bye
+import com.sookiwi.furigana.textMessageModel.Carousel
+import com.sookiwi.furigana.textMessageModel.Confirm
+import com.sookiwi.furigana.textMessageModel.Flex
+import com.sookiwi.furigana.textMessageModel.ImageCarousel
+import com.sookiwi.furigana.textMessageModel.ImageMap
+import com.sookiwi.furigana.textMessageModel.Others
+import com.sookiwi.furigana.textMessageModel.Profile
+import com.sookiwi.furigana.textMessageModel.QuickReply
+import com.sookiwi.furigana.textMessageModel.TextMessageEventConverter
 import mu.KotlinLogging
+import org.springframework.http.MediaType
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.Arrays
 import java.util.concurrent.ExecutionException
 
 @LineMessageHandler
 class FuriganaController(
-    private val lineMessagingClient: LineMessagingClient
+    private val lineMessagingClient: LineMessagingClient,
+    private val lineBotProperties: LineBotProperties
 ) {
     private val log = KotlinLogging.logger {}
-    private val textMessageEventConverter: TextMessageEventConverter = TextMessageEventConverter()
+    private val textMessageEventConverter: TextMessageEventConverter =
+        TextMessageEventConverter()
+
+    private val yahooFuriganaClient = WebClient.builder()
+        .baseUrl("https://jlp.yahooapis.jp/FuriganaService/V1/furigana")
+        .build()
 
     @EventMapping
     fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
@@ -102,7 +129,8 @@ class FuriganaController(
         val replyToken = commandEvent.replyToken
         when (val command = commandEvent.message.command) {
             is Buttons -> {
-                val imageUrl = createUri("/buttons/1040.jpg")
+                val imageUrl =
+                    createUri("/buttons/1040.jpg")
                 val buttonsTemplate = ButtonsTemplate(
                     imageUrl,
                     "My button sample",
@@ -111,7 +139,7 @@ class FuriganaController(
                         URIAction("Go to line.me", "https://line.me"),
                         PostbackAction("Say hello1", "hello こんにちは"),
                         PostbackAction("言 hello2", "hello こんにちは", "hello こんにちは"),
-                        MessageAction("Say message", "Rice=米")
+                        MessageAction("Say textMessageModel", "Rice=米")
                     )
                 )
                 val templateMessage = TemplateMessage("Button alt text", buttonsTemplate)
@@ -132,7 +160,8 @@ class FuriganaController(
                 }
             }
             is Carousel -> {
-                val imageUrl = createUri("/buttons/1040.jpg")
+                val imageUrl =
+                    createUri("/buttons/1040.jpg")
                 val carouselTemplate = CarouselTemplate(
                     Arrays.asList(
                         CarouselColumn(
@@ -164,7 +193,7 @@ class FuriganaController(
                                     "hello こんにちは"
                                 ),
                                 MessageAction(
-                                    "Say message",
+                                    "Say textMessageModel",
                                     "Rice=米"
                                 )
                             )
@@ -216,7 +245,8 @@ class FuriganaController(
                 reply(replyToken, ExampleFlexMessageSupplier().get())
             }
             is ImageCarousel -> {
-                val imageUrl = createUri("/buttons/1040.jpg")
+                val imageUrl =
+                    createUri("/buttons/1040.jpg")
 
                 val imageCarouselTemplate = ImageCarouselTemplate(
                     listOf(
@@ -226,7 +256,7 @@ class FuriganaController(
                         ),
                         ImageCarouselColumn(
                             imageUrl,
-                            MessageAction("Say message", "Rice=米")
+                            MessageAction("Say textMessageModel", "Rice=米")
                         ),
                         ImageCarouselColumn(
                             imageUrl,
@@ -283,7 +313,7 @@ class FuriganaController(
                             if (throwable != null) {
                                 replyText(
                                     replyToken,
-                                    throwable.message ?: "Fail to get profile without error message."
+                                    throwable.message ?: "Fail to get profile without error textMessageModel."
                                 )
                                 return@whenComplete
                             }
@@ -294,7 +324,7 @@ class FuriganaController(
                                     TextMessage(
                                         "Display name: " + profile.displayName
                                     ),
-                                    TextMessage("Status message: " + profile.statusMessage)
+                                    TextMessage("Status textMessageModel: " + profile.statusMessage)
                                 )
                             )
                         }
@@ -306,7 +336,44 @@ class FuriganaController(
                 reply(replyToken, MessageWithQuickReplySupplier().get())
             }
             is Others -> {
-                replyText(replyToken, command.message)
+                yahooFuriganaClient.get()
+                    .uri {
+                        it
+                            .queryParam("appid", lineBotProperties.yahoojpAppid)
+                            .queryParam(
+                                "sentence",
+                                URLEncoder.encode(command.message, "UTF-8")
+                            )
+                            .build()
+                    }
+                    .accept(MediaType.TEXT_XML)
+                    .acceptCharset(StandardCharsets.UTF_8)
+                    .retrieve()
+//                    .onStatus(HttpStatus::is5xxServerError) { Mono.error(YahooFuriganaException) }
+                    .bodyToMono(ResultSet::class.java)
+                    .subscribe({ resultSet ->
+                        val sb = StringBuilder()
+                        resultSet.result.forEach { result ->
+                            result.wordList.forEach { wordList ->
+                                wordList.word.forEach { word ->
+                                    sb.append(word.furigana ?: word.surface)
+                                }
+                            }
+                        }
+
+                        val resultString = sb.toString()
+
+                        log.info { resultString }
+                        replyText(replyToken, resultString)
+                    }, { exception ->
+                        when (exception) {
+                            is WebClientResponseException.ServiceUnavailable -> replyText(
+                                replyToken,
+                                command.message
+                            )
+                            else -> throw YahooFuriganaException("Yahoo API returned an unexpected status code.")
+                        }
+                    })
             }
         }
     }

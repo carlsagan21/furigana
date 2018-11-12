@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:yahoo:jp:jlp:FuriganaService"
+           targetNamespace="urn:yahoo:jp:jlp:FuriganaService" elementFormDefault="qualified">
+  <xs:element name="ResultSet">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Result" type="result_type" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="result_type">
+    <xs:sequence>
+      <xs:element name="WordList" type="word_list_type" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="word_list_type">
+    <xs:sequence>
+      <xs:element name="Word" type="word_type" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="word_type">
+    <xs:sequence>
+      <xs:element name="Surface" type="xs:string" />
+      <xs:element name="Furigana" type="xs:string" minOccurs="0" />
+      <xs:element name="Roman" type="xs:string" minOccurs="0" />
+      <xs:element name="SubWordList" type="subwordlist_type" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="subwordlist_type">
+    <xs:sequence>
+      <xs:element name="SubWord" type="subword_type" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="subword_type">
+    <xs:sequence>
+      <xs:element name="Surface" type="xs:string" />
+      <xs:element name="Furigana" type="xs:string" minOccurs="0" />
+      <xs:element name="Roman" type="xs:string" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
+  <!-- ws3025.yjdn.kks.yahoo.co.jp Mon Nov 12 14:11:27 JST 2018 -->

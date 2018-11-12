@@ -17,6 +17,8 @@ public class LineBotProperties {
 
     private @NotNull Handler handler;
 
+    private @NotNull String yahoojpAppid;
+
     public String getChannelToken() {
         return channelToken;
     }
@@ -39,6 +41,14 @@ public class LineBotProperties {
 
     public void setHandler(Handler handler) {
         this.handler = handler;
+    }
+
+    public String getYahoojpAppid() {
+        return yahoojpAppid;
+    }
+
+    public void setYahoojpAppid(final String yahoojpAppid) {
+        this.yahoojpAppid = yahoojpAppid;
     }
 
     public static class Handler {

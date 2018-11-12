@@ -9,3 +9,4 @@ class FuriganaApplication
 fun main(args: Array<String>) {
     runApplication<FuriganaApplication>(*args)
 }
+
