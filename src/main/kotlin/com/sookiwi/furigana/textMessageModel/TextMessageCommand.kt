@@ -5,6 +5,7 @@ import com.linecorp.bot.model.event.message.TextMessageContent
 import com.linecorp.bot.model.event.source.Source
 import com.sookiwi.furigana.exception.NoArgumentCommand
 import org.springframework.core.convert.converter.Converter
+import org.springframework.stereotype.Component
 
 sealed class TextMessageCommand
 object Buttons : TextMessageCommand()
@@ -19,6 +20,7 @@ object QuickReply : TextMessageCommand()
 data class Furi(val message: String) : TextMessageCommand()
 data class Gif(val message: String) : TextMessageCommand()
 
+@Component
 class TextMessageEventConverter
     : Converter<MessageEvent<TextMessageContent>, MessageEvent<TextMessageCommandContent>> {
     override fun convert(messageEvent: MessageEvent<TextMessageContent>): MessageEvent<TextMessageCommandContent> {

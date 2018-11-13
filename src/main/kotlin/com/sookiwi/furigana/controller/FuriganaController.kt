@@ -77,13 +77,12 @@ import java.util.concurrent.ExecutionException
 @LineMessageHandler
 class FuriganaController(
     private val lineMessagingClient: LineMessagingClient,
-    private val lineBotProperties: LineBotProperties
+    private val lineBotProperties: LineBotProperties,
+    private val textMessageEventConverter: TextMessageEventConverter
 ) {
     private val log = KotlinLogging.logger {}
-    private val textMessageEventConverter: TextMessageEventConverter = TextMessageEventConverter()
 
-    private val webClient = WebClient.builder()
-        .build()
+    private val webClient = WebClient.builder().build()
 
     @EventMapping
     fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
@@ -132,7 +131,7 @@ class FuriganaController(
         when (val command = commandEvent.message.command) {
             is Buttons -> {
                 val imageUrl =
-                    createStaticFileUri("/buttons/1040.jpg")
+                    createStaticFileUri("/static/buttons/1040.jpg")
                 val buttonsTemplate = ButtonsTemplate(
                     imageUrl,
                     "My button sample",
@@ -141,7 +140,7 @@ class FuriganaController(
                         URIAction("Go to line.me", "https://line.me"),
                         PostbackAction("Say hello1", "hello こんにちは"),
                         PostbackAction("言 hello2", "hello こんにちは", "hello こんにちは"),
-                        MessageAction("Say textMessageModel", "Rice=米")
+                        MessageAction("Say message", "Rice=米")
                     )
                 )
                 val templateMessage = TemplateMessage("Button alt text", buttonsTemplate)
@@ -163,7 +162,7 @@ class FuriganaController(
             }
             is Carousel -> {
                 val imageUrl =
-                    createStaticFileUri("/buttons/1040.jpg")
+                    createStaticFileUri("/static/buttons/1040.jpg")
                 val carouselTemplate = CarouselTemplate(
                     Arrays.asList(
                         CarouselColumn(
@@ -195,7 +194,7 @@ class FuriganaController(
                                     "hello こんにちは"
                                 ),
                                 MessageAction(
-                                    "Say textMessageModel",
+                                    "Say message",
                                     "Rice=米"
                                 )
                             )
@@ -248,7 +247,7 @@ class FuriganaController(
             }
             is ImageCarousel -> {
                 val imageUrl =
-                    createStaticFileUri("/buttons/1040.jpg")
+                    createStaticFileUri("/static/buttons/1040.jpg")
 
                 val imageCarouselTemplate = ImageCarouselTemplate(
                     listOf(
@@ -258,7 +257,7 @@ class FuriganaController(
                         ),
                         ImageCarouselColumn(
                             imageUrl,
-                            MessageAction("Say textMessageModel", "Rice=米")
+                            MessageAction("Say message", "Rice=米")
                         ),
                         ImageCarouselColumn(
                             imageUrl,
@@ -274,7 +273,7 @@ class FuriganaController(
             is ImageMap -> {
                 reply(
                     replyToken, ImagemapMessage(
-                        createStaticFileUri("/rich"),
+                        createStaticFileUri("/static/rich"),
                         "This is alt text",
                         ImagemapBaseSize(1040, 1040),
                         listOf(
@@ -315,7 +314,7 @@ class FuriganaController(
                             if (throwable != null) {
                                 replyText(
                                     replyToken,
-                                    throwable.message ?: "Fail to get profile without error textMessageModel."
+                                    throwable.message ?: "Fail to get profile without error message."
                                 )
                                 return@whenComplete
                             }
@@ -326,7 +325,7 @@ class FuriganaController(
                                     TextMessage(
                                         "Display name: " + profile.displayName
                                     ),
-                                    TextMessage("Status textMessageModel: " + profile.statusMessage)
+                                    TextMessage("Status message: " + profile.statusMessage)
                                 )
                             )
                         }
