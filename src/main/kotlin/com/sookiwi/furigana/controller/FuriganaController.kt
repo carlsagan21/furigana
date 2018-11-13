@@ -1,7 +1,9 @@
 package com.sookiwi.furigana.controller
 
+import com.google.common.io.ByteStreams
 import com.jayway.jsonpath.JsonPath
 import com.linecorp.bot.client.LineMessagingClient
+import com.linecorp.bot.client.MessageContentResponse
 import com.linecorp.bot.model.ReplyMessage
 import com.linecorp.bot.model.action.DatetimePickerAction
 import com.linecorp.bot.model.action.MessageAction
@@ -27,6 +29,7 @@ import com.linecorp.bot.model.event.message.UnknownMessageContent
 import com.linecorp.bot.model.event.message.VideoMessageContent
 import com.linecorp.bot.model.event.source.GroupSource
 import com.linecorp.bot.model.event.source.RoomSource
+import com.linecorp.bot.model.message.ImageMessage
 import com.linecorp.bot.model.message.ImagemapMessage
 import com.linecorp.bot.model.message.LocationMessage
 import com.linecorp.bot.model.message.Message
@@ -46,11 +49,12 @@ import com.linecorp.bot.model.message.template.ImageCarouselColumn
 import com.linecorp.bot.model.message.template.ImageCarouselTemplate
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
+import com.sookiwi.furigana.FuriganaApplication
 import com.sookiwi.furigana.LineBotProperties
 import com.sookiwi.furigana.dto.ResultSet
 import com.sookiwi.furigana.exception.YahooFuriganaException
-import com.sookiwi.furigana.supplier.FlexMessageSupplier
-import com.sookiwi.furigana.supplier.MessageWithQuickReplySupplier
+import com.sookiwi.furigana.supplier.flexMessageSupplier
+import com.sookiwi.furigana.supplier.messageWithQuickReplySupplier
 import com.sookiwi.furigana.textMessageModel.Buttons
 import com.sookiwi.furigana.textMessageModel.Bye
 import com.sookiwi.furigana.textMessageModel.Carousel
@@ -68,11 +72,19 @@ import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.io.IOException
+import java.io.UncheckedIOException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.Arrays
 import java.util.StringJoiner
+import java.util.UUID
 import java.util.concurrent.ExecutionException
+
+private val logger = KotlinLogging.logger {}
 
 @LineMessageHandler
 class FuriganaController(
@@ -80,8 +92,6 @@ class FuriganaController(
     private val lineBotProperties: LineBotProperties,
     private val textMessageEventConverter: TextMessageEventConverter
 ) {
-    private val log = KotlinLogging.logger {}
-
     private val webClient = WebClient.builder().build()
 
     @EventMapping
@@ -96,7 +106,16 @@ class FuriganaController(
 
     @EventMapping
     fun handleImageMessageEvent(event: MessageEvent<ImageMessageContent>) {
-        TODO()
+        handleHeavyContent(
+            event.replyToken,
+            event.message.id,
+            messageConsumer = { responseBody ->
+                val jpg = saveContent(ext = "jpg", responseBody = responseBody)
+//                val previewImg = createTempFile(ext = "jpg")
+//                system("convert", "-resize", "240x", jpg.path.toString(), previewImg.path.toString())
+                reply(event.replyToken, ImageMessage(jpg.uri, jpg.uri))
+            }
+        )
     }
 
     @EventMapping
@@ -125,7 +144,7 @@ class FuriganaController(
         checkNotNullTextMessageEvent(event)
 
         val commandEvent = textMessageEventConverter.convert(event)
-        log.info { commandEvent }
+        logger.info { commandEvent }
 
         val replyToken = commandEvent.replyToken
         when (val command = commandEvent.message.command) {
@@ -243,7 +262,7 @@ class FuriganaController(
                 reply(replyToken, templateMessage)
             }
             is Flex -> {
-                reply(replyToken, FlexMessageSupplier().get())
+                reply(replyToken, flexMessageSupplier())
             }
             is ImageCarousel -> {
                 val imageUrl =
@@ -334,7 +353,7 @@ class FuriganaController(
                 }
             }
             is QuickReply -> {
-                reply(replyToken, MessageWithQuickReplySupplier().get())
+                reply(replyToken, messageWithQuickReplySupplier())
             }
             is Furi -> {
                 webClient.get()
@@ -365,7 +384,7 @@ class FuriganaController(
 
                         val resultString = stringJoiner.toString()
 
-                        log.info { resultString }
+                        logger.info { resultString }
                         replyText(replyToken, resultString)
                     }, { exception ->
                         when (exception) {
@@ -426,19 +445,19 @@ class FuriganaController(
     // Indicates that the user performed a postback action. You can reply to this events.
     @EventMapping
     fun handleBeaconEvent(event: BeaconEvent) {
-        TODO()
+        replyText(event.replyToken, "Got beacon message ${event.beacon.hwid}")
     }
 
     // Indicates that your account was added as a friend (or unblocked). You can reply to this events.
     @EventMapping
     fun handleFollowEvent(event: FollowEvent) {
-        TODO()
+        replyText(event.replyToken, "Got follow event")
     }
 
     // Indicates that your bot joined a group chat.
     @EventMapping
     fun handleJoinEvent(event: JoinEvent) {
-        TODO()
+        replyText(event.replyToken, "Joined ${event.source}")
     }
 
     // Indicates that a user deleted your bot from a group or that your bot left a group or room.
@@ -450,13 +469,16 @@ class FuriganaController(
     // Indicates that the user performed a postback action. You can reply to this events.
     @EventMapping
     fun handlePostbackEvent(event: PostbackEvent) {
-        TODO()
+        replyText(
+            event.replyToken, "Got postback data ${event.postbackContent.data}, param ${event
+                .postbackContent.params}"
+        )
     }
 
     // Indicates that your account was blocked.
     @EventMapping
     fun handleUnfollowEvent(event: UnfollowEvent) {
-        TODO()
+        logger.info { "unfolow this bot: $event" }
     }
 
     @EventMapping
@@ -466,7 +488,26 @@ class FuriganaController(
 
     @EventMapping
     fun handleOtherEvent(event: Event) {
-        TODO()
+        logger.info { "Received message(Ignored): $event" }
+    }
+
+    private fun handleHeavyContent(
+        replyToken: String,
+        messageId: String,
+        messageConsumer: (MessageContentResponse) -> Unit
+    ) {
+        val response: MessageContentResponse
+        try {
+            response = lineMessagingClient.getMessageContent(messageId).get()
+        } catch (e: InterruptedException) {
+            reply(replyToken, TextMessage("Cannot get image: ${e.message}"))
+            throw RuntimeException(e)
+        } catch (e: ExecutionException) {
+            reply(replyToken, TextMessage("Cannot get image: ${e.message}"))
+            throw RuntimeException(e)
+        }
+
+        messageConsumer(response)
     }
 
     private fun reply(replyToken: String, message: Message) {
@@ -478,7 +519,7 @@ class FuriganaController(
             val apiResponse = lineMessagingClient
                 .replyMessage(ReplyMessage(replyToken, messages))
                 .get()
-            log.info("Sent messages: {}", apiResponse)
+            logger.info("Sent messages: {}", apiResponse)
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         } catch (e: ExecutionException) {
@@ -494,44 +535,88 @@ class FuriganaController(
 
         reply(replyToken, TextMessage(messageToReply))
     }
+}
 
-    companion object {
-        private fun createStaticFileUri(path: String): String {
-            return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(path).build()
-                .toUriString()
-        }
+private fun createStaticFileUri(path: String): String {
+    return ServletUriComponentsBuilder.fromCurrentContextPath()
+        .path(path).build()
+        .toUriString()
+}
 
-        // later, platform types have to be wrap out recursively in one command / annotation / ...
-        // may name it, type fixer.
-        private fun checkNotNullEvent(event: Event) {
-            checkNotNull(event.source)
-            checkNotNull(event.timestamp)
-        }
+// later, platform types have to be wrap out recursively in one command / annotation / ...
+// may name it, type fixer.
+private fun checkNotNullEvent(event: Event) {
+    checkNotNull(event.source)
+    checkNotNull(event.timestamp)
+}
 
-        private fun checkNotNullMessageEvent(event: MessageEvent<*>) {
-            checkNotNullEvent(event)
-            checkNotNull(event.replyToken)
-            checkNotNull(event.message)
-        }
+private fun checkNotNullMessageEvent(event: MessageEvent<*>) {
+    checkNotNullEvent(event)
+    checkNotNull(event.replyToken)
+    checkNotNull(event.message)
+}
 
-        private fun checkNotNullLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
-            checkNotNullMessageEvent(event)
-            checkNotNull(event.message.id)
-            checkNotNull(event.message.address)
-        }
+private fun checkNotNullLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
+    checkNotNullMessageEvent(event)
+    checkNotNull(event.message.id)
+    checkNotNull(event.message.address)
+}
 
-        private fun checkNotNullStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
-            checkNotNullMessageEvent(event)
-            checkNotNull(event.message.id)
-            checkNotNull(event.message.packageId)
-            checkNotNull(event.message.stickerId)
-        }
+private fun checkNotNullStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
+    checkNotNullMessageEvent(event)
+    checkNotNull(event.message.id)
+    checkNotNull(event.message.packageId)
+    checkNotNull(event.message.stickerId)
+}
 
-        private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>) {
-            checkNotNullMessageEvent(event)
-            checkNotNull(event.message.id)
-            checkNotNull(event.message.text)
+private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>) {
+    checkNotNullMessageEvent(event)
+    checkNotNull(event.message.id)
+    checkNotNull(event.message.text)
+}
+
+private fun createTempFile(ext: String): DownloadedContent {
+    val fileName =
+        LocalDateTime.now().toString() + '-'.toString() + UUID.randomUUID().toString() + '.'.toString() + ext
+    val tempFile = FuriganaApplication.downloadedContentDir.resolve(fileName)
+    tempFile.toFile().deleteOnExit()
+    return DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.getFileName()))
+}
+
+private fun createUri(path: String): String {
+    return ServletUriComponentsBuilder.fromCurrentContextPath().path(path).build().toUriString()
+}
+
+private fun saveContent(ext: String, responseBody: MessageContentResponse): DownloadedContent {
+    logger.info { "Got content-type: $responseBody" }
+
+    val tempFile = createTempFile(ext)
+    try {
+        Files.newOutputStream(tempFile.path).use { outputStream ->
+            ByteStreams.copy(responseBody.stream, outputStream)
+            logger.info("Saved $ext: $tempFile")
+            return tempFile
         }
+    } catch (e: IOException) {
+        throw UncheckedIOException(e)
     }
 }
+
+private fun system(vararg args: String) {
+    val processBuilder = ProcessBuilder(*args)
+    try {
+        val start = processBuilder.start()
+        val i = start.waitFor()
+        logger.info { "result: ${args.contentToString()} =>  $i" }
+    } catch (e: IOException) {
+        throw UncheckedIOException(e)
+    } catch (e: InterruptedException) {
+        logger.info(e) { "Interrupted" }
+        Thread.currentThread().interrupt()
+    }
+}
+
+data class DownloadedContent(
+    val path: Path? = null,
+    val uri: String? = null
+)
