@@ -7,11 +7,17 @@ import java.nio.file.Path
 
 @SpringBootApplication
 class FuriganaApplication {
-    companion object {
-        val downloadedContentDir: Path = Files.createTempDirectory("line-bot")
-    }
+
+//    @Bean
+//    fun webClientCustomizer(): WebClientCustomizer {
+//        return WebClientCustomizer { webClientBuilder ->
+//            webClientBuilder.baseUrl("")
+//        }
+//    }
 }
 
 fun main(args: Array<String>) {
     runApplication<FuriganaApplication>(*args)
 }
+
+val downloadedContentDir: Path = Files.createTempDirectory("line-bot")

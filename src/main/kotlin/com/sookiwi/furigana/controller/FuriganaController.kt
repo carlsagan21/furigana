@@ -49,8 +49,8 @@ import com.linecorp.bot.model.message.template.ImageCarouselColumn
 import com.linecorp.bot.model.message.template.ImageCarouselTemplate
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
-import com.sookiwi.furigana.FuriganaApplication
 import com.sookiwi.furigana.LineBotProperties
+import com.sookiwi.furigana.downloadedContentDir
 import com.sookiwi.furigana.dto.ResultSet
 import com.sookiwi.furigana.exception.YahooFuriganaException
 import com.sookiwi.furigana.supplier.flexMessageSupplier
@@ -90,9 +90,10 @@ private val logger = KotlinLogging.logger {}
 class FuriganaController(
     private val lineMessagingClient: LineMessagingClient,
     private val lineBotProperties: LineBotProperties,
-    private val textMessageEventConverter: TextMessageEventConverter
+    private val textMessageEventConverter: TextMessageEventConverter,
+    webClientBuilder: WebClient.Builder
 ) {
-    private val webClient = WebClient.builder().build()
+    private val webClient = webClientBuilder.build()
 
     @EventMapping
     fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
@@ -377,7 +378,11 @@ class FuriganaController(
                         resultSet.result.forEach { result ->
                             result.wordList.forEach { wordList ->
                                 wordList.word.forEach { word ->
-                                    stringJoiner.add(word.furigana ?: word.surface)
+                                    when {
+                                        word.furigana == null -> stringJoiner.add(word.surface)
+                                        word.furigana == word.surface -> stringJoiner.add(word.surface)
+                                        else -> stringJoiner.add("${word.surface}(${word.furigana})")
+                                    }
                                 }
                             }
                         }
@@ -578,7 +583,7 @@ private fun checkNotNullTextMessageEvent(event: MessageEvent<TextMessageContent>
 private fun createTempFile(ext: String): DownloadedContent {
     val fileName =
         LocalDateTime.now().toString() + '-'.toString() + UUID.randomUUID().toString() + '.'.toString() + ext
-    val tempFile = FuriganaApplication.downloadedContentDir.resolve(fileName)
+    val tempFile = downloadedContentDir.resolve(fileName)
     tempFile.toFile().deleteOnExit()
     return DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.getFileName()))
 }

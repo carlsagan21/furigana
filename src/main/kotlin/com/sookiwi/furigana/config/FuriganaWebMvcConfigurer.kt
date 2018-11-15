@@ -1,6 +1,6 @@
 package com.sookiwi.furigana.config
 
-import com.sookiwi.furigana.FuriganaApplication
+import com.sookiwi.furigana.downloadedContentDir
 import mu.KotlinLogging
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
@@ -11,7 +11,7 @@ private val logger = KotlinLogging.logger {}
 @Configuration
 class FuriganaWebMvcConfigurer : WebMvcConfigurer {
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
-        val downloadedContentUri = FuriganaApplication.downloadedContentDir.toUri().toASCIIString()
+        val downloadedContentUri = downloadedContentDir.toUri().toASCIIString()
 
         logger.info { "downloaded dir: $downloadedContentUri" }
         registry.addResourceHandler("/downloaded/**")
