@@ -9,44 +9,16 @@ import com.linecorp.bot.model.action.DatetimePickerAction
 import com.linecorp.bot.model.action.MessageAction
 import com.linecorp.bot.model.action.PostbackAction
 import com.linecorp.bot.model.action.URIAction
-import com.linecorp.bot.model.event.AccountLinkEvent
-import com.linecorp.bot.model.event.BeaconEvent
-import com.linecorp.bot.model.event.Event
-import com.linecorp.bot.model.event.FollowEvent
-import com.linecorp.bot.model.event.JoinEvent
-import com.linecorp.bot.model.event.LeaveEvent
-import com.linecorp.bot.model.event.MessageEvent
-import com.linecorp.bot.model.event.PostbackEvent
-import com.linecorp.bot.model.event.UnfollowEvent
-import com.linecorp.bot.model.event.UnknownEvent
-import com.linecorp.bot.model.event.message.AudioMessageContent
-import com.linecorp.bot.model.event.message.FileMessageContent
-import com.linecorp.bot.model.event.message.ImageMessageContent
-import com.linecorp.bot.model.event.message.LocationMessageContent
-import com.linecorp.bot.model.event.message.StickerMessageContent
-import com.linecorp.bot.model.event.message.TextMessageContent
-import com.linecorp.bot.model.event.message.UnknownMessageContent
-import com.linecorp.bot.model.event.message.VideoMessageContent
+import com.linecorp.bot.model.event.*
+import com.linecorp.bot.model.event.message.*
 import com.linecorp.bot.model.event.source.GroupSource
 import com.linecorp.bot.model.event.source.RoomSource
-import com.linecorp.bot.model.message.ImageMessage
-import com.linecorp.bot.model.message.ImagemapMessage
-import com.linecorp.bot.model.message.LocationMessage
-import com.linecorp.bot.model.message.Message
-import com.linecorp.bot.model.message.StickerMessage
-import com.linecorp.bot.model.message.TemplateMessage
-import com.linecorp.bot.model.message.TextMessage
-import com.linecorp.bot.model.message.VideoMessage
+import com.linecorp.bot.model.message.*
 import com.linecorp.bot.model.message.imagemap.ImagemapArea
 import com.linecorp.bot.model.message.imagemap.ImagemapBaseSize
 import com.linecorp.bot.model.message.imagemap.MessageImagemapAction
 import com.linecorp.bot.model.message.imagemap.URIImagemapAction
-import com.linecorp.bot.model.message.template.ButtonsTemplate
-import com.linecorp.bot.model.message.template.CarouselColumn
-import com.linecorp.bot.model.message.template.CarouselTemplate
-import com.linecorp.bot.model.message.template.ConfirmTemplate
-import com.linecorp.bot.model.message.template.ImageCarouselColumn
-import com.linecorp.bot.model.message.template.ImageCarouselTemplate
+import com.linecorp.bot.model.message.template.*
 import com.linecorp.bot.spring.boot.annotation.EventMapping
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler
 import com.sookiwi.furigana.LineBotProperties
@@ -55,18 +27,7 @@ import com.sookiwi.furigana.dto.ResultSet
 import com.sookiwi.furigana.exception.YahooFuriganaException
 import com.sookiwi.furigana.supplier.flexMessageSupplier
 import com.sookiwi.furigana.supplier.messageWithQuickReplySupplier
-import com.sookiwi.furigana.textMessageModel.Buttons
-import com.sookiwi.furigana.textMessageModel.Bye
-import com.sookiwi.furigana.textMessageModel.Carousel
-import com.sookiwi.furigana.textMessageModel.Confirm
-import com.sookiwi.furigana.textMessageModel.Flex
-import com.sookiwi.furigana.textMessageModel.Furi
-import com.sookiwi.furigana.textMessageModel.Gif
-import com.sookiwi.furigana.textMessageModel.ImageCarousel
-import com.sookiwi.furigana.textMessageModel.ImageMap
-import com.sookiwi.furigana.textMessageModel.Profile
-import com.sookiwi.furigana.textMessageModel.QuickReply
-import com.sookiwi.furigana.textMessageModel.TextMessageEventConverter
+import com.sookiwi.furigana.textMessageModel.*
 import mu.KotlinLogging
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
@@ -79,9 +40,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
-import java.util.Arrays
-import java.util.StringJoiner
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ExecutionException
 
 private val logger = KotlinLogging.logger {}
@@ -97,16 +56,19 @@ class FuriganaController(
 
     @EventMapping
     fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
+        logger.info { "event=$event" }
         TODO()
     }
 
     @EventMapping
     fun handleFileMessageEvent(event: MessageEvent<FileMessageContent>) {
+        logger.info { "event=$event" }
         TODO()
     }
 
     @EventMapping
     fun handleImageMessageEvent(event: MessageEvent<ImageMessageContent>) {
+        logger.info { "event=$event" }
         handleHeavyContent(
             event.replyToken,
             event.message.id,
@@ -121,6 +83,7 @@ class FuriganaController(
 
     @EventMapping
     fun handleLocationMessageEvent(event: MessageEvent<LocationMessageContent>) {
+        logger.info { "event=$event" }
         checkNotNullLocationMessageEvent(event)
 
         val locationMessageContent = event.message
@@ -135,6 +98,7 @@ class FuriganaController(
 
     @EventMapping
     fun handleStickerMessageEvent(event: MessageEvent<StickerMessageContent>) {
+        logger.info { "event=$event" }
         checkNotNullStickerMessageEvent(event)
 
         reply(event.replyToken, StickerMessage(event.message.packageId, event.message.stickerId))
@@ -142,6 +106,7 @@ class FuriganaController(
 
     @EventMapping
     fun handleTextMessageEvent(event: MessageEvent<TextMessageContent>) {
+        logger.info { "event=$event" }
         checkNotNullTextMessageEvent(event)
 
         val commandEvent = textMessageEventConverter.convert(event)
@@ -432,11 +397,13 @@ class FuriganaController(
 
     @EventMapping
     fun handleUnknownMessageEvent(event: MessageEvent<UnknownMessageContent>) {
+        logger.info { "event=$event" }
         TODO()
     }
 
     @EventMapping
     fun handleVideoMessageEvent(event: MessageEvent<VideoMessageContent>) {
+        logger.info { "event=$event" }
         TODO()
     }
 
@@ -444,36 +411,42 @@ class FuriganaController(
     // You can reply to this events. For more information, see Linking user accounts.
     @EventMapping
     fun handleAccountLinkEvent(event: AccountLinkEvent) {
+        logger.info { "event=$event" }
         TODO()
     }
 
     // Indicates that the user performed a postback action. You can reply to this events.
     @EventMapping
     fun handleBeaconEvent(event: BeaconEvent) {
+        logger.info { "event=$event" }
         replyText(event.replyToken, "Got beacon message ${event.beacon.hwid}")
     }
 
     // Indicates that your account was added as a friend (or unblocked). You can reply to this events.
     @EventMapping
     fun handleFollowEvent(event: FollowEvent) {
+        logger.info { "event=$event" }
         replyText(event.replyToken, "Got follow event")
     }
 
     // Indicates that your bot joined a group chat.
     @EventMapping
     fun handleJoinEvent(event: JoinEvent) {
+        logger.info { "event=$event" }
         replyText(event.replyToken, "Joined ${event.source}")
     }
 
     // Indicates that a user deleted your bot from a group or that your bot left a group or room.
     @EventMapping
     fun handleLeaveEvent(event: LeaveEvent) {
+        logger.info { "event=$event" }
         TODO()
     }
 
     // Indicates that the user performed a postback action. You can reply to this events.
     @EventMapping
     fun handlePostbackEvent(event: PostbackEvent) {
+        logger.info { "event=$event" }
         replyText(
             event.replyToken, "Got postback data ${event.postbackContent.data}, param ${event
                 .postbackContent.params}"
@@ -488,6 +461,7 @@ class FuriganaController(
 
     @EventMapping
     fun handleUnknownEvent(event: UnknownEvent) {
+        logger.info { "event=$event" }
         TODO()
     }
 
@@ -585,7 +559,7 @@ private fun createTempFile(ext: String): DownloadedContent {
         LocalDateTime.now().toString() + '-'.toString() + UUID.randomUUID().toString() + '.'.toString() + ext
     val tempFile = downloadedContentDir.resolve(fileName)
     tempFile.toFile().deleteOnExit()
-    return DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.getFileName()))
+    return DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.fileName))
 }
 
 private fun createUri(path: String): String {
