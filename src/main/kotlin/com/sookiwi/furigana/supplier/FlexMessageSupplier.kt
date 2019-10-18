@@ -2,26 +2,20 @@ package com.sookiwi.furigana.supplier
 
 import com.linecorp.bot.model.action.URIAction
 import com.linecorp.bot.model.message.FlexMessage
-import com.linecorp.bot.model.message.flex.component.Box
-import com.linecorp.bot.model.message.flex.component.Button
-import com.linecorp.bot.model.message.flex.component.FlexComponent
-import com.linecorp.bot.model.message.flex.component.Icon
-import com.linecorp.bot.model.message.flex.component.Image
-import com.linecorp.bot.model.message.flex.component.Separator
-import com.linecorp.bot.model.message.flex.component.Spacer
-import com.linecorp.bot.model.message.flex.component.Text
+import com.linecorp.bot.model.message.flex.component.*
 import com.linecorp.bot.model.message.flex.container.Bubble
 import com.linecorp.bot.model.message.flex.unit.FlexFontSize
 import com.linecorp.bot.model.message.flex.unit.FlexLayout
 import com.linecorp.bot.model.message.flex.unit.FlexMarginSize
+import java.net.URI
 
 fun flexMessageSupplier(): FlexMessage {
     val heroBlock = Image.builder()
-        .url("https://example.com/cafe.jpg")
+        .url(URI("https://example.com/cafe.jpg"))
         .size(Image.ImageSize.FULL_WIDTH)
         .aspectRatio(Image.ImageAspectRatio.R20TO13)
         .aspectMode(Image.ImageAspectMode.Cover)
-        .action(URIAction("label", "http://example.com"))
+        .action(URIAction("label", URI("http://example.com"), null))
         .build()
 
     val bodyBlock = createBodyBlock()
@@ -41,13 +35,13 @@ private fun createFooterBlock(): Box {
         .builder()
         .style(Button.ButtonStyle.LINK)
         .height(Button.ButtonHeight.SMALL)
-        .action(URIAction("CALL", "tel:000000"))
+        .action(URIAction("CALL", URI("tel:000000"), null))
         .build()
     val separator = Separator.builder().build()
     val websiteAction = Button.builder()
         .style(Button.ButtonStyle.LINK)
         .height(Button.ButtonHeight.SMALL)
-        .action(URIAction("WEBSITE", "https://example.com"))
+        .action(URIAction("WEBSITE", URI("https://example.com"), null))
         .build()
 
     return Box.builder()

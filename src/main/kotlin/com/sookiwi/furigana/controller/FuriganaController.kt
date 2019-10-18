@@ -35,6 +35,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.io.IOException
 import java.io.UncheckedIOException
+import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -45,6 +46,7 @@ import java.util.concurrent.ExecutionException
 
 private val logger = KotlinLogging.logger {}
 
+@Suppress("unused", "UnstableApiUsage")
 @LineMessageHandler
 class FuriganaController(
     private val lineMessagingClient: LineMessagingClient,
@@ -57,13 +59,13 @@ class FuriganaController(
     @EventMapping
     fun handleAudioMessageEvent(event: MessageEvent<AudioMessageContent>) {
         logger.info { "event=$event" }
-        TODO()
+        replyText(event.replyToken, "MessageEvent<AudioMessageContent>; $event")
     }
 
     @EventMapping
     fun handleFileMessageEvent(event: MessageEvent<FileMessageContent>) {
         logger.info { "event=$event" }
-        TODO()
+        replyText(event.replyToken, "MessageEvent<FileMessageContent>; $event")
     }
 
     @EventMapping
@@ -74,8 +76,6 @@ class FuriganaController(
             event.message.id,
             messageConsumer = { responseBody ->
                 val jpg = saveContent(ext = "jpg", responseBody = responseBody)
-//                val previewImg = createTempFile(ext = "jpg")
-//                system("convert", "-resize", "240x", jpg.path.toString(), previewImg.path.toString())
                 reply(event.replyToken, ImageMessage(jpg.uri, jpg.uri))
             }
         )
@@ -122,7 +122,7 @@ class FuriganaController(
                     "My button sample",
                     "Hello, my button",
                     listOf(
-                        URIAction("Go to line.me", "https://line.me"),
+                        URIAction("Go to line.me", URI("https://line.me"), null),
                         PostbackAction("Say hello1", "hello こんにちは"),
                         PostbackAction("言 hello2", "hello こんにちは", "hello こんにちは"),
                         MessageAction("Say message", "Rice=米")
@@ -132,8 +132,7 @@ class FuriganaController(
                 reply(replyToken, templateMessage)
             }
             is Bye -> {
-                val source = command.source
-                when (source) {
+                when (val source = command.source) {
                     is GroupSource -> {
                         replyText(replyToken, "Leaving group")
                         lineMessagingClient.leaveGroup(source.groupId).get()
@@ -149,16 +148,18 @@ class FuriganaController(
                 val imageUrl =
                     createStaticFileUri("/static/buttons/1040.jpg")
                 val carouselTemplate = CarouselTemplate(
-                    Arrays.asList(
+                    listOf(
                         CarouselColumn(
                             imageUrl, "hoge", "fuga", listOf(
                                 URIAction(
                                     "Go to line.me",
-                                    "https://line.me"
+                                    URI("https://line.me"),
+                                    null
                                 ),
                                 URIAction(
                                     "Go to line.me",
-                                    "https://line.me"
+                                    URI("https://line.me"),
+                                    null
                                 ),
                                 PostbackAction(
                                     "Say hello1",
@@ -238,7 +239,7 @@ class FuriganaController(
                     listOf(
                         ImageCarouselColumn(
                             imageUrl,
-                            URIAction("Goto line.me", "https://line.me")
+                            URIAction("Goto line.me", URI("https://line.me"), null)
                         ),
                         ImageCarouselColumn(
                             imageUrl,
@@ -386,8 +387,8 @@ class FuriganaController(
                         reply(
                             event.replyToken,
                             VideoMessage(
-                                fixedWidthMp4,
-                                fixedWidthUrl
+                                URI(fixedWidthMp4),
+                                URI(fixedWidthUrl)
                             )
                         )
                     }
@@ -398,13 +399,13 @@ class FuriganaController(
     @EventMapping
     fun handleUnknownMessageEvent(event: MessageEvent<UnknownMessageContent>) {
         logger.info { "event=$event" }
-        TODO()
+        replyText(event.replyToken, "MessageEvent<UnknownMessageContent>; $event")
     }
 
     @EventMapping
     fun handleVideoMessageEvent(event: MessageEvent<VideoMessageContent>) {
         logger.info { "event=$event" }
-        TODO()
+        replyText(event.replyToken, "MessageEvent<VideoMessageContent>; $event")
     }
 
     // Indicates that the user has linked their LINE account with a provider's (your) service account.
@@ -412,62 +413,74 @@ class FuriganaController(
     @EventMapping
     fun handleAccountLinkEvent(event: AccountLinkEvent) {
         logger.info { "event=$event" }
-        TODO()
+        replyText(event.replyToken, "AccountLinkEvent; $event")
     }
 
     // Indicates that the user performed a postback action. You can reply to this events.
     @EventMapping
     fun handleBeaconEvent(event: BeaconEvent) {
         logger.info { "event=$event" }
-        replyText(event.replyToken, "Got beacon message ${event.beacon.hwid}")
+        replyText(event.replyToken, "BeaconEvent; $event")
     }
 
     // Indicates that your account was added as a friend (or unblocked). You can reply to this events.
     @EventMapping
     fun handleFollowEvent(event: FollowEvent) {
         logger.info { "event=$event" }
-        replyText(event.replyToken, "Got follow event")
+        replyText(event.replyToken, "FollowEvent; $event")
     }
 
     // Indicates that your bot joined a group chat.
     @EventMapping
     fun handleJoinEvent(event: JoinEvent) {
         logger.info { "event=$event" }
-        replyText(event.replyToken, "Joined ${event.source}")
+        replyText(event.replyToken, "JoinEvent; $event")
     }
 
     // Indicates that a user deleted your bot from a group or that your bot left a group or room.
     @EventMapping
     fun handleLeaveEvent(event: LeaveEvent) {
         logger.info { "event=$event" }
-        TODO()
+    }
+
+    @EventMapping
+    fun handleMemberJoinedEvent(event: MemberJoinedEvent) {
+        logger.info { "event=$event" }
+        replyText(event.replyToken, "MemberJoinedEvent; $event")
+    }
+
+    @EventMapping
+    fun handleMemberLeftEvent(event: MemberLeftEvent) {
+        logger.info { "event=$event" }
     }
 
     // Indicates that the user performed a postback action. You can reply to this events.
     @EventMapping
     fun handlePostbackEvent(event: PostbackEvent) {
         logger.info { "event=$event" }
-        replyText(
-            event.replyToken, "Got postback data ${event.postbackContent.data}, param ${event
-                .postbackContent.params}"
-        )
+        replyText(event.replyToken, "PostbackEvent; $event")
+    }
+
+    @EventMapping
+    fun handleThingsEvent(event: ThingsEvent) {
+        logger.info { "event=$event" }
+        replyText(event.replyToken, "ThingsEvent; $event")
     }
 
     // Indicates that your account was blocked.
     @EventMapping
     fun handleUnfollowEvent(event: UnfollowEvent) {
-        logger.info { "unfolow this bot: $event" }
+        logger.info { "event=$event" }
     }
 
     @EventMapping
     fun handleUnknownEvent(event: UnknownEvent) {
         logger.info { "event=$event" }
-        TODO()
     }
 
     @EventMapping
     fun handleOtherEvent(event: Event) {
-        logger.info { "Received message(Ignored): $event" }
+        logger.info { "event=$event" }
     }
 
     private fun handleHeavyContent(
@@ -516,10 +529,9 @@ class FuriganaController(
     }
 }
 
-private fun createStaticFileUri(path: String): String {
+private fun createStaticFileUri(path: String): URI {
     return ServletUriComponentsBuilder.fromCurrentContextPath()
-        .path(path).build()
-        .toUriString()
+        .path(path).build().toUri()
 }
 
 // later, platform types have to be wrap out recursively in one command / annotation / ...
@@ -562,8 +574,8 @@ private fun createTempFile(ext: String): DownloadedContent {
     return DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.fileName))
 }
 
-private fun createUri(path: String): String {
-    return ServletUriComponentsBuilder.fromCurrentContextPath().path(path).build().toUriString()
+private fun createUri(path: String): URI {
+    return ServletUriComponentsBuilder.fromCurrentContextPath().path(path).build().toUri()
 }
 
 private fun saveContent(ext: String, responseBody: MessageContentResponse): DownloadedContent {
@@ -581,21 +593,7 @@ private fun saveContent(ext: String, responseBody: MessageContentResponse): Down
     }
 }
 
-private fun system(vararg args: String) {
-    val processBuilder = ProcessBuilder(*args)
-    try {
-        val start = processBuilder.start()
-        val i = start.waitFor()
-        logger.info { "result: ${args.contentToString()} =>  $i" }
-    } catch (e: IOException) {
-        throw UncheckedIOException(e)
-    } catch (e: InterruptedException) {
-        logger.info(e) { "Interrupted" }
-        Thread.currentThread().interrupt()
-    }
-}
-
 data class DownloadedContent(
-    val path: Path? = null,
-    val uri: String? = null
+    val path: Path,
+    val uri: URI
 )
