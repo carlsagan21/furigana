@@ -9,6 +9,7 @@ import com.linecorp.bot.model.message.Message
 import com.linecorp.bot.model.message.TextMessage
 import com.linecorp.bot.model.message.quickreply.QuickReply
 import com.linecorp.bot.model.message.quickreply.QuickReplyItem
+import java.net.URI
 
 fun messageWithQuickReplySupplier(): Message {
     val items = listOf(
@@ -23,6 +24,10 @@ fun messageWithQuickReplySupplier(): Message {
             .build(),
         QuickReplyItem.builder()
             .action(LocationAction.withLabel("Location"))
+            .build(),
+        QuickReplyItem.builder()
+            .action(LocationAction.withLabel("TintColor Should be false"))
+            .imageUrl(URI.create("https://line-objects-dev.com/flex/icon/material/ic_place_black_24dp_2x.png"))
             .build(),
         QuickReplyItem.builder()
             .action(
