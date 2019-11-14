@@ -26,7 +26,7 @@ fun messageWithQuickReplySupplier(): Message {
             .action(LocationAction.withLabel("Location"))
             .build(),
         QuickReplyItem.builder()
-            .action(LocationAction.withLabel("TintColor Should be false"))
+            .action(LocationAction.withLabel("TintColor false"))
             .imageUrl(URI.create("https://line-objects-dev.com/flex/icon/material/ic_place_black_24dp_2x.png"))
             .build(),
 
